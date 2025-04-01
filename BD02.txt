@@ -37,7 +37,13 @@ pracownicy.id_etatu group by etaty.etat
 SELECT count(pracownicy.id_pracownika) as ile, wydzialy.nazwa from pracownicy, wydzialy
 WHERE wydzialy.id_wydzialu = pracownicy.id_wydzialu group by wydzialy.nazwa HAVING
 COUNT(pracownicy.id_pracownika) > 4
-15 - cos nie dziala
-SELECT MIN_BY(ile), NAZWA from (SELECT count (pracownicy.id_pracownika) as ile, wydzialy.nazwa from pracownicy, wydzialy
-WHERE  wydzialy.id_wydzialu = pracownicy.id_wydzialu
-GROUP BY wydzialy.nazwa
+15 
+SELECT nazwa, liczba_pracownikow
+FROM (
+    SELECT w.nazwa, COUNT(p.id_pracownika) AS liczba_pracownikow
+    FROM pracownicy p
+    JOIN wydzialy w ON p.id_wydzialu = w.id_wydzialu
+    GROUP BY w.nazwa
+    ORDER BY liczba_pracownikow ASC
+)
+WHERE ROWNUM = 1;
