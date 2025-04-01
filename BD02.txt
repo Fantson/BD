@@ -1,0 +1,43 @@
+1
+SELECT ID_PRACOWNIKA, IMIE, NAZWISKO, PENSJA + COALESCE(PROWIZJA,0)
+as WARTOSC FROM PRACOWNICY
+2
+SELECT ID_PRACOWNIKA, IMIE, NAZWISKO, PENSJA * 1,01 FROM PRACOWNICY
+3
+SELECT * FROM PRACOWNICY WHERE PROWIZJA is NULL
+4
+SELECT * FROM klienci WHERE miasto not in ‘BURLINGAME’
+5
+SELECT IMIE, NAZWISKO FROM pracownicy WHERE prowizja BETWEEN 500 and 900
+6
+SELECT count(*) as ile from klienci
+7
+SELECT MAX(pensja) from pracownicy
+8
+SELECT AVG(pracownicy.PENSJA), etaty.ETAT from pracownicy inner join etaty on
+pracownicy.ID_ETATU = etaty.ID_ETATU WHERE etaty.ETAT = ‘MANAGER’ group by
+etaty.ETAT;
+9
+SELECT pracownicy.imie, pracownicy.nazwisko, wydzialy.NAZWA from pracownicy inner join
+wydzialy on wydzialy.id_wydzialu = pracownicy.id_wydzialu
+10
+SELECT pracownicy.imie, pracownicy.nazwisko, wydzialy.NAZWA as WYDZIAL from pracownicy
+inner join wydzialy on wydzialy.id_wydzialu = pracownicy.id_wydzialu order by wydzialy.nazwa,
+pracownicy.nazwisko
+11
+SELECT pracownicy.imie, pracownicy.nazwisko, etaty.etat from pracownicy inner join etaty on
+etaty.id_etatu = pracownicy.id_etatu WHERE etaty.etat LIKE ‘%L%’
+12
+SELECT pracownicy.imie, pracownicy.nazwisko, etaty.etat from pracownicy, etaty WHERE
+etaty.id_etatu= pracownicy.id_etatu and etaty.etat LIKE ‘%L%’
+13
+SELECT sum(pracownicy.pensja) as ile, etaty.etat from pracownicy, etaty WHERE etaty.id_etatu =
+pracownicy.id_etatu group by etaty.etat
+14
+SELECT count(pracownicy.id_pracownika) as ile, wydzialy.nazwa from pracownicy, wydzialy
+WHERE wydzialy.id_wydzialu = pracownicy.id_wydzialu group by wydzialy.nazwa HAVING
+COUNT(pracownicy.id_pracownika) > 4
+15 - cos nie dziala
+SELECT MIN_BY(ile), NAZWA from (SELECT count (pracownicy.id_pracownika) as ile, wydzialy.nazwa from pracownicy, wydzialy
+WHERE  wydzialy.id_wydzialu = pracownicy.id_wydzialu
+GROUP BY wydzialy.nazwa
