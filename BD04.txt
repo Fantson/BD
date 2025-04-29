@@ -1,0 +1,163 @@
+A)
+CREATE OR REPLACE PROCEDURE dodaj_etat (
+    p_id_etatu ETATY.ID_ETATU%TYPE,
+    p_nazwa_etatu ETATY.ETAT%TYPE
+) AS
+BEGIN
+    INSERT INTO ETATY (ID_ETATU, ETAT)
+    VALUES (p_id_etatu, p_nazwa_etatu);
+END;
+/
+EXEC dodaj_etat(200, 'starszy specjalista');
+
+B)
+CREATE OR REPLACE PROCEDURE usun_pracownika (
+    p_id_pracownika PRACOWNICY.ID_PRACOWNIKA%TYPE
+) AS
+BEGIN
+    DELETE FROM PRACOWNICY
+    WHERE ID_PRACOWNIKA = p_id_pracownika;
+END;
+/
+EXEC usun_pracownika(101);
+
+C)
+CREATE OR REPLACE PROCEDURE edytuj_pracownika (
+    p_id NUMBER,
+    p_imie VARCHAR2,
+    p_nazwisko VARCHAR2,
+    p_pensja NUMBER
+) AS
+BEGIN
+    UPDATE PRACOWNICY
+    SET IMIE = p_imie,
+        NAZWISKO = p_nazwisko,
+        PENSJA = p_pensja
+    WHERE ID_PRACOWNIKA = p_id;
+END;
+/
+
+D)
+CREATE OR REPLACE PROCEDURE dodaj_etat (
+    p_id_etatu ETATY.ID_ETATU%TYPE,
+    p_nazwa_etatu ETATY.ETAT%TYPE
+) AS
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count
+    FROM ETATY
+    WHERE ID_ETATU = p_id_etatu;
+
+    IF v_count = 0 THEN
+        INSERT INTO ETATY (ID_ETATU, ETAT)
+        VALUES (p_id_etatu, p_nazwa_etatu);
+    END IF;
+END;
+/
+
+E)
+CREATE OR REPLACE FUNCTION srednia_pensja
+RETURN NUMBER IS
+    v_srednia NUMBER;
+BEGIN
+    SELECT AVG(PENSJA) INTO v_srednia
+    FROM PRACOWNICY;
+    RETURN v_srednia;
+END;
+/
+
+F)
+CREATE OR REPLACE FUNCTION zmien_prowizje (
+    p_id NUMBER,
+    p_nowa_prowizja NUMBER
+) RETURN VARCHAR2 IS
+BEGIN
+    IF p_nowa_prowizja < 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Prowizja nie może być ujemna');
+    END IF;
+
+    UPDATE PRACOWNICY
+    SET PROWIZJA = p_nowa_prowizja
+    WHERE ID_PRACOWNIKA = p_id;
+
+    RETURN 'Zmieniono prowizję';
+END;
+/
+
+G) 
+CREATE OR REPLACE FUNCTION ilosc_pracownicy_z_pensja (
+    p_min NUMBER,
+    p_max NUMBER
+) RETURN NUMBER IS
+    v_ilosc NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_ilosc
+    FROM PRACOWNICY
+    WHERE PENSJA BETWEEN p_min AND p_max;
+    RETURN v_ilosc;
+END;
+/
+
+H)
+CREATE OR REPLACE FUNCTION zwieksz_pensje (
+    p_id NUMBER
+) RETURN NUMBER IS
+    v_pensja PRACOWNICY.PENSJA%TYPE;
+    v_prowizja PRACOWNICY.PROWIZJA%TYPE;
+    v_szef PRACOWNICY.ID_SZEFA%TYPE;
+BEGIN
+    SELECT PENSJA, PROWIZJA, ID_SZEFA INTO v_pensja, v_prowizja, v_szef
+    FROM PRACOWNICY WHERE ID_PRACOWNIKA = p_id;
+
+    IF v_szef IS NULL THEN
+        RETURN v_pensja;
+    ELSIF v_prowizja IS NOT NULL THEN
+        v_pensja := v_pensja + 100;
+    ELSE
+        v_pensja := v_pensja * 1.1;
+    END IF;
+
+    UPDATE PRACOWNICY
+    SET PENSJA = v_pensja
+    WHERE ID_PRACOWNIKA = p_id;
+
+    RETURN v_pensja;
+END;
+/
+
+I)
+DROP PROCEDURE usun_pracownika;
+DROP FUNCTION srednia_pensja;
+
+J)
+CREATE OR REPLACE TYPE etat_obj_type AS OBJECT (
+    id_etatu NUMBER,
+    etat VARCHAR2(50)
+);
+/
+K)
+CREATE OR REPLACE TYPE etat_tab_type AS TABLE OF etat_obj_type;
+/
+CREATE OR REPLACE FUNCTION pobierz_etaty
+RETURN etat_tab_type PIPELINED IS
+BEGIN
+    PIPE ROW(etat_obj_type(100, 'stażysta'));
+    PIPE ROW(etat_obj_type(101, 'junior'));
+    PIPE ROW(etat_obj_type(102, 'medium'));
+    PIPE ROW(etat_obj_type(103, 'master'));
+    RETURN;
+END;
+/
+SELECT * FROM TABLE(pobierz_etaty);
+
+L)
+CREATE OR REPLACE FUNCTION zwroc_etaty
+RETURN etat_tab_type PIPELINED IS
+BEGIN
+    FOR r IN (SELECT ID_ETATU, ETAT FROM ETATY) LOOP
+        PIPE ROW(etat_obj_type(r.ID_ETATU, r.ETAT));
+    END LOOP;
+    RETURN;
+END;
+/
+SELECT * FROM TABLE(zwroc_etaty);
