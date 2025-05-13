@@ -1,0 +1,115 @@
+-- Zadanie 2: Tworzenie tablespace
+CREATE TABLESPACE projekt_tablespace 
+DATAFILE 'projekt_tablespace.dbf' 
+SIZE 100M 
+AUTOEXTEND ON 
+NEXT 10M 
+MAXSIZE 500M;
+
+-- Zadanie 3: Tworzenie użytkownika
+CREATE USER student1 IDENTIFIED BY "07052023" 
+DEFAULT TABLESPACE projekt_tablespace 
+QUOTA UNLIMITED ON projekt_tablespace;
+
+GRANT CONNECT, RESOURCE TO student1;
+
+-- Zadanie 5: Tworzenie tabel
+CREATE TABLE Studenci (
+    ID_studenta NUMBER PRIMARY KEY,
+    Imie VARCHAR2(50),
+    Nazwisko VARCHAR2(50),
+    Indeks VARCHAR2(10) UNIQUE
+);
+
+CREATE TABLE Tematy (
+    ID_tematu NUMBER PRIMARY KEY,
+    Nazwa VARCHAR2(100)
+);
+
+CREATE TABLE Przydzialy (
+    ID_przydzialu NUMBER PRIMARY KEY,
+    ID_studenta NUMBER REFERENCES Studenci(ID_studenta),
+    ID_tematu NUMBER REFERENCES Tematy(ID_tematu)
+);
+
+CREATE TABLE Oceny (
+    ID_oceny NUMBER PRIMARY KEY,
+    Data_oceny DATE,
+    Ocena NUMBER(3,1),
+    ID_studenta NUMBER REFERENCES Studenci(ID_studenta)
+);
+
+-- Zadanie 6: Tworzenie sekwencji
+CREATE SEQUENCE student_seq
+START WITH 0
+INCREMENT BY 1
+MAXVALUE 10000;
+
+-- Zadanie 7: Funkcja addStudent
+CREATE OR REPLACE FUNCTION addStudent (
+    p_imie VARCHAR2,
+    p_nazwisko VARCHAR2,
+    p_indeks VARCHAR2
+) RETURN VARCHAR2 IS
+    v_id NUMBER;
+BEGIN
+    v_id := student_seq.NEXTVAL;
+
+    INSERT INTO Studenci (ID_studenta, Imie, Nazwisko, Indeks)
+    VALUES (v_id, p_imie, p_nazwisko, p_indeks);
+
+    RETURN 'Dodano studenta o ID: ' || v_id;
+END;
+/
+
+-- Zadanie 7: Przykładowe wywołanie funkcji
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(addStudent('Marek', 'Nowak', '998877'));
+END;
+/
+
+-- Zadanie 8: Wstawianie danych
+INSERT INTO Tematy VALUES (100, 'Aplikacja do nauki języków');
+INSERT INTO Tematy VALUES (101, 'Gra planszowa z elementami UNITY');
+INSERT INTO Tematy VALUES (102, 'System zarządzania czasem studentów');
+INSERT INTO Tematy VALUES (103, 'Aplikacja do zarządzania zespołem Agile');
+
+INSERT INTO Studenci VALUES (1, 'Jan', 'Kowalski', '123456');
+INSERT INTO Studenci VALUES (2, 'Anna', 'Nowak', '234567');
+INSERT INTO Studenci VALUES (3, 'Zofia', 'Lis', '345678');
+INSERT INTO Studenci VALUES (4, 'Tomasz', 'Nowicki', '255499');
+
+INSERT INTO Oceny VALUES (1, TO_DATE('10-06-2023','DD-MM-YYYY'), 3.5, 1);
+INSERT INTO Oceny VALUES (2, TO_DATE('15-06-2023','DD-MM-YYYY'), 4.3, 2);
+INSERT INTO Oceny VALUES (3, TO_DATE('18-06-2023','DD-MM-YYYY'), 2.5, 3);
+
+INSERT INTO Przydzialy VALUES (1, 1, 100);
+INSERT INTO Przydzialy VALUES (2, 2, 101);
+INSERT INTO Przydzialy VALUES (3, 3, 102);
+INSERT INTO Przydzialy VALUES (4, 4, 103);
+
+-- Zadanie 9: Widoki
+CREATE VIEW widok_tematy AS
+SELECT * FROM Tematy;
+
+CREATE VIEW widok_studenci_bez_tematu AS
+SELECT S.*
+FROM Studenci S
+WHERE NOT EXISTS (
+    SELECT 1 FROM Przydzialy P
+    WHERE P.ID_studenta = S.ID_studenta
+);
+
+-- Zadanie 10: Zapytanie do eksportu CSV
+SELECT Indeks, Imie, Nazwisko, Ocena
+FROM Studenci S
+JOIN Oceny O ON S.ID_studenta = O.ID_studenta;
+
+-- Zadanie 11: Eksport bazy - wykonać w SQL Developer (eksport do .sql/.dmp)
+a) Eksport do .sql:
+W SQL Developer:
+
+Narzędzia → Eksportuj dane → Format: SQL Insert Statements
+
+b) Backup:
+Użyj opcji Tools > Database Export, wybierz użytkownika student1 i zapisanie wszystkiego do pliku .dmp lub .sql
