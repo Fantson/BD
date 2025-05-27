@@ -78,8 +78,8 @@ ORDER BY User_Email;
 
 b) Systemy z nazwą zaczynającą się od 'abc' lub id ≤ 10:
 
-INSERT INTO USER (Id, User_Number, User_Email, System_Id)
-VALUES (10, 113, 'pkowaliski@email.com', 1);
+SELECT * FROM SYSTEM
+WHERE System_name LIKE 'abc%' OR Id <= 10;
 
 c) Dodanie użytkownika:
 
