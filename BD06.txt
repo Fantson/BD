@@ -99,12 +99,14 @@ JOIN SYSTEM S ON U.System_Id = S.Id;
 
 f) Informacje o użytkownikach i dostępie:
 
-SELECT CONCAT('Użytkownik o numerze: ', U.User_Number,
-              ' ma dostęp o nazwie: ', A.Access_Name,
-              ' na poziomie: ', A.Access_Level) AS Info
-FROM USER_ACCESS UA
-JOIN USER U ON UA.User_Id = U.Id
-JOIN ACCESS A ON UA.Access_Id = A.Id;
+SELECT 
+  'Użytkownik o numerze: ' || U.User_Number || 
+  ' ma dostęp o nazwie: ' || A.Access_Name || 
+  ' na poziomie: ' || A.Access_Level AS Info
+FROM uzytkownik_dostep UA
+JOIN Uzytkownik U ON UA.User_Id = U.Id
+JOIN Dostep A ON UA.Access_Id = A.Id;
+
 
 g) Systemy i liczba użytkowników:
 
