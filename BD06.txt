@@ -1,0 +1,152 @@
+1. Zaznacz prawidłową odpowiedź
+a) Zdefiniowanie klucza obcego jest niezbędne do utworzenia:
+b relacji 1..n
+
+b) Klauzulą SQL pozwalającą na wybranie korespondujących wartości tabel połączonych relacją 1..n jest:
+b INNER JOIN
+
+c) Do stworzenia tabeli w bazie danych, należy zastosować komendę SQL:
+a CREATE TABLE
+
+d) Dodanie rekordu w tabeli w bazie danych umożliwia komenda SQL:
+b INSERT INTO
+
+e) Początek komendy „ALTER TABLE table_name ADD…” pozwala na:
+c Dodanie do tabeli ‘table_name’ nowej kolumny.
+
+2. Diagram – relacje i ograniczenia
+Trzy tabele:
+
+Właściciel
+
+ID int PK
+Imię varchar NN
+Nazwisko varchar NN
+Pesel varchar NN UQ
+
+Nieruchomość
+
+ID int PK
+Adres varchar NN
+Wartość_rynkowa float NN
+
+Rejestr
+
+ID int PK
+Właściciel_ID int FK NN → Właściciel(ID)
+Nieruchomość_ID int FK NN → Nieruchomość(ID)
+
+Relacja wiele-do-wielu między Właścicielem a Nieruchomością jest realizowana przez tabelę pośrednią Rejestr, która zawiera wyłącznie połączenia (brak samodzielnego rekordu bez relacji) – więc NOT NULL na FK.
+
+3. Odwzorowanie schematu BD – komendy SQL
+
+CREATE TABLE SYSTEM (
+    Id INT PRIMARY KEY,
+    System_name VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE ACCESS (
+    Id INT PRIMARY KEY,
+    Access_Name VARCHAR(30) NOT NULL,
+    Access_Level INT NOT NULL,
+    Description VARCHAR(512)
+);
+
+CREATE TABLE USER (
+    Id INT PRIMARY KEY,
+    User_Number INT UNIQUE,
+    User_Email VARCHAR(256) UNIQUE NOT NULL,
+    System_Id INT,
+    FOREIGN KEY (System_Id) REFERENCES SYSTEM(Id)
+);
+
+CREATE TABLE USER_ACCESS (
+    Id INT PRIMARY KEY,
+    User_Id INT NOT NULL,
+    Access_Id INT NOT NULL,
+    Granted DATE NOT NULL,
+    FOREIGN KEY (User_Id) REFERENCES USER(Id),
+    FOREIGN KEY (Access_Id) REFERENCES ACCESS(Id)
+);
+
+4. Zapytania SQL
+a) Użytkownicy przypisani do systemu o id = 1, posortowani po e-mail:
+
+SELECT * FROM USER
+WHERE System_Id = 1
+ORDER BY User_Email;
+
+b) Systemy z nazwą zaczynającą się od 'abc' lub id ≤ 10:
+
+INSERT INTO USER (Id, User_Number, User_Email, System_Id)
+VALUES (10, 113, 'pkowaliski@email.com', 1);
+
+c) Dodanie użytkownika:
+
+INSERT INTO USER (Id, User_Number, User_Email, System_Id)
+VALUES (10, 113, 'pkowaliski@email.com', 1);
+
+d) Usunięcie użytkowników z systemów o id <6;10>:
+
+DELETE FROM USER
+WHERE System_Id BETWEEN 6 AND 10;
+
+e) Dane użytkowników z nazwą systemu:
+
+SELECT U.Id, U.User_Number, U.User_Email, S.System_name
+FROM USER U
+JOIN SYSTEM S ON U.System_Id = S.Id;
+
+f) Informacje o użytkownikach i dostępie:
+
+SELECT CONCAT('Użytkownik o numerze: ', U.User_Number,
+              ' ma dostęp o nazwie: ', A.Access_Name,
+              ' na poziomie: ', A.Access_Level) AS Info
+FROM USER_ACCESS UA
+JOIN USER U ON UA.User_Id = U.Id
+JOIN ACCESS A ON UA.Access_Id = A.Id;
+
+g) Systemy i liczba użytkowników:
+
+SELECT S.System_name, COUNT(U.Id) AS Ilosc_Uzytkownikow
+FROM SYSTEM S
+LEFT JOIN USER U ON S.Id = U.System_Id
+GROUP BY S.System_name;
+
+h) Tylko systemy z ≥ 5 użytkownikami:
+
+SELECT S.System_name, COUNT(U.Id) AS Ilosc_Uzytkownikow
+FROM SYSTEM S
+JOIN USER U ON S.Id = U.System_Id
+GROUP BY S.System_name
+HAVING COUNT(U.Id) >= 5;
+
+i) Dodanie kolumny z datą utworzenia konta:
+ALTER TABLE USER
+ADD Data_Utworzenia DATE;
+
+5. Procedury/funkcje SQL
+a) Procedura zmieniająca email użytkownika:
+
+CREATE PROCEDURE updateUserEmail(IN userId INT, IN newEmail VARCHAR(256))
+BEGIN
+    UPDATE USER SET User_Email = newEmail
+    WHERE Id = userId;
+END;
+
+b) Funkcja zwracająca ID użytkownika po e-mailu:
+
+CREATE FUNCTION getIdUserByEmail(email VARCHAR(256))
+RETURNS INT
+BEGIN
+    DECLARE result INT;
+    SELECT Id INTO result FROM USER WHERE User_Email = email LIMIT 1;
+    IF result IS NULL THEN
+        RETURN -1;
+    ELSE
+        RETURN result;
+    END IF;
+END;
+
+
+
