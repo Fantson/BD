@@ -1,0 +1,152 @@
+--1. Wstawianie danych
+--Polecenie:
+--Wstaw nowy wpis do tabeli EMPLOYEES, podając swoje dane (imię, nazwisko, email, itd.), przypisując pracownika do istniejącego managera i ustawiając aktualną datę zatrudnienia.
+
+--INSERT INTO employees (employee_id, first_name, last_name, email, phone, hire_date, manager_id, job_title)
+VALUES (108, 'Lukasz', 'Pachla', 'Test@mail.com', '800008', '2025-10-04', 1, 'testowe');
+
+--Polecenie:
+--Wyświetl łączną wartość zamówień dla każdego klienta (CUSTOMERS).
+
+SELECT c.Name, SUM(oi.quantity * oi.unit_price) as suma
+FROM Customers c JOIN orders o on c.Customer_id=o.customer_id
+JOIN ORDER_ITEMS oi ON o.Order_id=oi.Order_id
+GROUP BY c.name;
+
+--Polecenie:
+--Podaj listę klientów, którzy mają dokładnie jeden kontakt (CONTACTS).
+
+SELECT cu.Name FROM customers cu join contacts co on cu.customer_id = co.contact_id
+group by cu.Name HAVING Count(co.contact_id)=1;
+
+--Wyświetl produkty z ich kategoriami i ceną jednostkową, posortowane malejąco według ceny.
+SELECT p.product_name, pc.category_name, p.list_price FROM products p JOIN PRODUCT_CATEGORIES pc ON p.category_id=pc.category_id
+ORDER BY p.list_price desc;
+
+--Wyświetl imiona i nazwiska pracowników (EMPLOYEES), którzy są managerami innych pracowników.
+SELECT DISTINCT e.FIRST_NAME, e.LAST_NAME FROM employees e join employees m on e.EMPLOYEE_ID = m.MANAGER_ID;
+
+--Wypisz klientów, którzy nie mają żadnych zamówień.
+SELECT cu.Name FROM customers cu join ORDERS o on cu.customer_id=o.customer_id GROUP BY cu.Name HAVING COUNT (o.customer_ID)=0;
+
+--Wyświetl nazwę magazynu, który przechowuje najwięcej produktów (różnych PRODUCT_ID).
+SELECT w.warehouse_name, COUNT(distinct i.Product_id), p.product_name FROM warehouses w join inventories i on i.warehouse_id=w.warehouse_id 
+join products p on p.product_id=i.product_id group by  w.warehouse_name, p.product_name order by count(distinct i.Product_id) desc;
+
+--Wyświetl klientów, których choć jedno zamówienie miało wartość większą niż 10 000.
+SELECT distinct cu.name from customers cu join orders o on o.customer_id=cu.customer_id join order_items oi on oi.order_id=o.order_id 
+Group by cu.name, o.order_id HAVING MAX(oi.quantity*oi.unit_price)>10000;
+
+SELECT order_id, SUM(quantity*unit_price)AS laczna_cena FROM ORDER_ITEMS 
+GROUP BY order_id ORDER BY order_id;
+
+SELECT cu.name, COUNT(co.contact_id) FROM CUSTOMERS cu
+JOIN CONTACTS co ON cu.customer_id=co.customer_id 
+GROUP BY cu.name HAVING COUNT(co.contact_id)=1;
+
+UPDATE CUSTOMERS SET credit_limit=credit_limit*0.95 WHERE customer_id IN (SELECT cu.customer_id 
+FROM CUSTOMERS cu JOIN ORDERS o ON cu.customer_id=o.customer_id  
+WHERE TO_CHAR(o.order_date, 'MM')=(TO_CHAR(SYSDATE, 'MM')-1));
+
+
+
+
+--Wypisz produkty, które zostały zamówione więcej niż 5 razy w ciągu ostatnich 2 miesięcy.
+
+SELECT p.product_name FROM PRODUCTS p
+JOIN  ORDER_ITEMS oi ON p.product_id=oi.product_id
+JOIN ORDERS o ON o.order_id=oi.order_id 
+WHERE TO_CHAR(o.order_date, 'MM') 
+BETWEEN (TO_CHAR(SYSDATE, 'MM')-2) AND (TO_CHAR(SYSDATE, 'MM')-1)
+GROUP BY p.product_name HAVING COUNT(oi.product_id)>5;
+
+
+
+
+
+--Wyswietl 3 najlepszych klientow z najwieksza iloscia zamowien
+
+SELECT * FROM (
+SELECT cu.name, COUNT(o.order_id) AS liczba FROM CUSTOMERS cu JOIN ORDERS o
+ON cu.customer_id=o.customer_id GROUP BY  cu.name  ORDER BY liczba DESC) 
+WHERE ROWNUM<=3;
+
+
+
+
+
+--Zwiększ limit kredytowy o 10% klientom, którzy złożyli przynajmniej 3 zamówienia w ostatnim kwartale.
+
+UPDATE CUSTOMERS SET credit_limit=credit_limit*1.1 WHERE customer_id IN 
+(SELECT cu.customer_id FROM CUSTOMERS cu JOIN ORDERS o ON cu.customer_id = o.customer_id
+WHERE TO_CHAR(o.order_date, 'MM') BETWEEN 1 AND 3 GROUP BY cu.customer_id 
+HAVING COUNT(*)>=3);
+
+
+
+
+--Wyświetl listę klientów, którzy nie mają żadnego kontaktu.
+
+SELECT cu.name FROM CUSTOMERS cu JOIN CONTACTS co ON cu.customer_id=co.customer_id
+GROUP BY cu.name HAVING COUNT(*)=1;
+
+
+
+
+
+--Wyświetl nazwę i liczbę zamówień dla każdego sprzedawcy (salesman).
+
+SELECT e.first_name, e.last_name, COUNT(o.order_id) FROM EMPLOYEES e JOIN ORDERS o ON e.employee_id = o.salesman_id
+GROUP BY e.first_name, e.last_name ;
+
+
+
+--Usuń zamówienia, które zostały złożone przez klientów z limitem kredytowym poniżej 1000.
+
+DELETE FROM ORDERS WHERE customer_id IN (SELECT customer_id FROM CUSTOMERS 
+WHERE credit_limit = 100);
+
+
+
+
+
+--Podaj listę klientów, którzy nigdy nie złożyli zamówienia.
+
+SELECT cu.name, COUNT(o.order_id) FROM CUSTOMERS cu 
+JOIN ORDERS o ON cu.customer_id=o.customer_id
+GROUP BY cu.name HAVING COUNT(o.order_id)=0;
+
+
+
+
+--Podaj średnią wartość pozycji zamówienia (quantity * unit_price) z ostatniego miesiąca.
+
+SELECT o.order_id, ROUND(AVG(oi.quantity*oi.unit_price),2) FROM ORDERS o
+JOIN ORDER_ITEMS oi ON o.order_id=oi.order_id GROUP BY o.order_id;
+
+
+
+
+--Podaj średnią wartość wszystkich zamowien
+
+SELECT ROUND(AVG(oi.quantity*oi.unit_price),2) FROM ORDER_ITEMS oi;
+
+
+
+
+
+--Zmień nazwę kontaktu na 'ZAKTUALIZOWANY' dla każdego klienta, który złożył zamówienie o wartości powyżej 10 000.
+
+UPDATE CONTACTS SET first_name = 'ZAKTUALIZOWANY' WHERE contact_id IN
+(SELECT co.contact_id FROM CONTACTS co JOIN CUSTOMERS cu ON co.customer_id = cu.customer_id
+JOIN ORDERS o ON o.customer_id=cu.customer_id JOIN ORDER_ITEMS oi ON oi.order_id = o.order_id
+WHERE oi.quantity*oi.unit_price < 2000);
+
+
+
+
+--Wyświetl ID i nazwę produktu, który przyniósł największy przychód ze sprzedaży.
+
+SELECT * FROM(SELECT p.product_id, p.product_name, SUM(oi.quantity*oi.unit_price) AS przychod 
+FROM PRODUCTS p JOIN ORDER_ITEMS oi ON oi.product_id=p.product_id 
+GROUP BY p.product_id, p.product_name ORDER BY przychod DESC) WHERE ROWNUM<=1;
